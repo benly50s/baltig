@@ -1,0 +1,48 @@
+version: 2
+
+project_name: baltig
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - env:
+      - CGO_ENABLED=0
+    goos:
+      - darwin
+      - linux
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w -X main.version={{.Version}}
+
+archives:
+  - format: tar.gz
+    name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}"
+    files:
+      - completions/*
+
+brews:
+  - name: baltig
+    repository:
+      owner: benly
+      name: homebrew-tap
+    homepage: "https://github.com/benly/baltig"
+    description: "GitLab pipeline TUI"
+    test: |
+      system "#{bin}/baltig --help"
+
+checksum:
+  name_template: "checksums.txt"
+
+snapshot:
+  version_template: "{{ .Tag }}-next"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"

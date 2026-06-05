@@ -5,6 +5,10 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/benly/baltig/internal/config"
+	"github.com/benly/baltig/internal/gitlab"
+	"github.com/benly/baltig/internal/tui"
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/spf13/cobra"
 )
 
@@ -28,7 +32,23 @@ func Execute() {
 }
 
 func runRoot(cmd *cobra.Command, args []string) error {
-	// TUI 실행 — Task 16에서 구현
-	fmt.Println("baltig: TUI not yet implemented")
-	return nil
+	cfg, err := config.Load()
+	if err != nil {
+		return fmt.Errorf("load config: %w", err)
+	}
+	if err := config.Validate(cfg); err != nil {
+		fmt.Fprintln(os.Stderr, "baltig: "+err.Error())
+		fmt.Fprintln(os.Stderr, "Run 'baltig onboard' to configure.")
+		os.Exit(1)
+	}
+
+	client, err := gitlab.New(cfg.Global.GitLabURL, cfg.Global.Token)
+	if err != nil {
+		return fmt.Errorf("create gitlab client: %w", err)
+	}
+
+	app := tui.NewApp(cfg, client)
+	p := tea.NewProgram(app, tea.WithAltScreen())
+	_, err = p.Run()
+	return err
 }

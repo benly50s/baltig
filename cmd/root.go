@@ -15,6 +15,11 @@ var rootCmd = &cobra.Command{
 	RunE:  runRoot,
 }
 
+func init() {
+	rootCmd.SilenceErrors = true
+	rootCmd.SilenceUsage = true
+}
+
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintln(os.Stderr, err)

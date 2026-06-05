@@ -66,27 +66,42 @@ func (m *AppModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case navigateToRepoSearch:
 		m.state = stateRepoSearch
 		m.repoSearch = NewRepoSearchModel(m.cfg, m.client)
-		return m, m.repoSearch.Init()
+		return m, tea.Batch(
+			m.repoSearch.Init(),
+			m.applySize(m.repoSearch.Update),
+		)
 
 	case navigateToPipelineList:
 		m.state = statePipelineList
 		m.pipelineList = NewPipelineListModel(m.cfg, m.client, msg.project)
-		return m, m.pipelineList.Init()
+		return m, tea.Batch(
+			m.pipelineList.Init(),
+			m.applySize(m.pipelineList.Update),
+		)
 
 	case navigateToPipelineDetail:
 		m.state = statePipelineDetail
 		m.pipelineDetail = NewPipelineDetailModel(m.cfg, m.client, msg.projectID, msg.pipeline)
-		return m, m.pipelineDetail.Init()
+		return m, tea.Batch(
+			m.pipelineDetail.Init(),
+			m.applySize(m.pipelineDetail.Update),
+		)
 
 	case navigateToPipelineRun:
 		m.state = statePipelineRun
 		m.pipelineRun = NewPipelineRunModel(m.cfg, m.client, msg.project)
-		return m, m.pipelineRun.Init()
+		return m, tea.Batch(
+			m.pipelineRun.Init(),
+			m.applySize(m.pipelineRun.Update),
+		)
 
 	case navigateToJobLog:
 		m.state = stateJobLog
 		m.jobLog = NewJobLogModel(m.cfg, m.client, msg.projectID, msg.job)
-		return m, m.jobLog.Init()
+		return m, tea.Batch(
+			m.jobLog.Init(),
+			m.applySize(m.jobLog.Update),
+		)
 
 	case navigateBack:
 		return m.handleBack()
@@ -94,7 +109,10 @@ func (m *AppModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case repoAdded:
 		m.state = stateRepoList
 		m.repoList = NewRepoListModel(m.cfg, m.client)
-		return m, m.repoList.Init()
+		return m, tea.Batch(
+			m.repoList.Init(),
+			m.applySize(m.repoList.Update),
+		)
 	}
 
 	return m, m.updateChild(msg)
@@ -153,6 +171,16 @@ func (m *AppModel) View() string {
 		return m.jobLog.View()
 	}
 	return ""
+}
+
+// applySize sends a WindowSizeMsg to a child model to set its dimensions.
+// Call this right after creating a new child model.
+func (m *AppModel) applySize(update func(tea.Msg) (tea.Model, tea.Cmd)) tea.Cmd {
+	if m.width == 0 && m.height == 0 {
+		return nil
+	}
+	_, cmd := update(tea.WindowSizeMsg{Width: m.width, Height: m.height})
+	return cmd
 }
 
 // Navigation messages — child models emit these to trigger state transitions.

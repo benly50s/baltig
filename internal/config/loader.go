@@ -100,7 +100,7 @@ func (cfg *Config) AddProject(p ProjectEntry) {
 	cfg.Projects = append(cfg.Projects, p)
 }
 
-func (cfg *Config) RemoveProject(id int) {
+func (cfg *Config) RemoveProject(id int64) {
 	result := make([]ProjectEntry, 0, len(cfg.Projects))
 	for _, p := range cfg.Projects {
 		if p.ID != id {

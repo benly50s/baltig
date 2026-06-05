@@ -103,7 +103,7 @@ func (m *RepoSearchModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			// result list: Enter → add repo
 			if i, ok := m.list.SelectedItem().(searchResultItem); ok {
 				entry := config.ProjectEntry{
-					ID:        int(i.p.ID),
+					ID:        i.p.ID,
 					Namespace: i.p.NameWithNamespace,
 					Name:      i.p.Name,
 				}

@@ -16,7 +16,7 @@ type GlobalConfig struct {
 }
 
 type ProjectEntry struct {
-	ID        int    `yaml:"id"`
+	ID        int64  `yaml:"id"`
 	Namespace string `yaml:"namespace"` // stores "group/repo"
 	Name      string `yaml:"name"`
 	Starred   bool   `yaml:"starred"`

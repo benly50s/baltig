@@ -158,7 +158,7 @@ func (m *PipelineRunModel) submit() tea.Cmd {
 	}
 
 	client := m.client
-	projectID := int64(m.project.ID)
+	projectID := m.project.ID
 
 	return func() tea.Msg {
 		p, err := client.CreatePipeline(projectID, ref, vars)

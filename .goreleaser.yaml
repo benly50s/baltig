@@ -5,6 +5,7 @@ project_name: baltig
 before:
   hooks:
     - go mod tidy
+    - make completions
 
 builds:
   - env:

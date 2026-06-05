@@ -57,7 +57,7 @@ func NewPipelineListModel(cfg *config.Config, client *gitlab.Client, project con
 
 func (m *PipelineListModel) loadPipelines() tea.Cmd {
 	client := m.client
-	projectID := int64(m.project.ID)
+	projectID := m.project.ID
 	return func() tea.Msg {
 		pipelines, err := client.ListPipelines(projectID)
 		if err != nil {
@@ -99,7 +99,7 @@ func (m *PipelineListModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		case key.Matches(msg, Keys.Select):
 			if i, ok := m.list.SelectedItem().(pipelineItem); ok {
-				pID := int64(m.project.ID)
+				pID := m.project.ID
 				p := i.p
 				return m, func() tea.Msg {
 					return navigateToPipelineDetail{projectID: pID, pipeline: p}

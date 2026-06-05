@@ -3,6 +3,7 @@ package gitlab
 
 import (
 	"fmt"
+	"io"
 	"time"
 )
 
@@ -43,10 +44,8 @@ func (c *Client) GetJobLog(projectID int64, jobID int64) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("get job log %d: %w", jobID, err)
 	}
-	// bytes.Reader implements io.Reader; read all bytes
-	buf := make([]byte, reader.Len())
-	_, err = reader.Read(buf)
-	if err != nil && err.Error() != "EOF" {
+	buf, err := io.ReadAll(reader)
+	if err != nil {
 		return "", fmt.Errorf("read job log %d: %w", jobID, err)
 	}
 	return string(buf), nil

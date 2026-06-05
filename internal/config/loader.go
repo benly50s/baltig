@@ -3,25 +3,38 @@ package config
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	"gopkg.in/yaml.v3"
 )
 
 const defaultRef = "main"
 
-func ConfigDir() string {
-	home, _ := os.UserHomeDir()
-	return filepath.Join(home, ".baltig")
+func configDir() (string, error) {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "", fmt.Errorf("config: cannot determine home directory: %w", err)
+	}
+	return filepath.Join(home, ".baltig"), nil
 }
 
-func ConfigPath() string {
-	return filepath.Join(ConfigDir(), "config.yaml")
+// ConfigPath returns the path to the config file.
+func ConfigPath() (string, error) {
+	dir, err := configDir()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(dir, "config.yaml"), nil
 }
 
 func Load() (*Config, error) {
-	path := ConfigPath()
+	path, err := ConfigPath()
+	if err != nil {
+		return nil, err
+	}
 	data, err := os.ReadFile(path)
 	if errors.Is(err, os.ErrNotExist) {
 		return defaults(), nil
@@ -38,14 +51,19 @@ func Load() (*Config, error) {
 }
 
 func Save(cfg *Config) error {
-	if err := os.MkdirAll(ConfigDir(), 0700); err != nil {
+	dir, err := configDir()
+	if err != nil {
 		return err
 	}
+	if err := os.MkdirAll(dir, 0700); err != nil {
+		return err
+	}
+	path := filepath.Join(dir, "config.yaml")
 	data, err := yaml.Marshal(cfg)
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(ConfigPath(), data, 0600)
+	return os.WriteFile(path, data, 0600)
 }
 
 func Validate(cfg *Config) error {
@@ -60,21 +78,22 @@ func Validate(cfg *Config) error {
 
 func (cfg *Config) AddRecent(namespace string) {
 	// Remove if already present, then prepend
-	filtered := cfg.Global.Recents[:0]
+	filtered := make([]RecentEntry, 0, len(cfg.Global.Recents))
 	for _, r := range cfg.Global.Recents {
 		if r.Namespace != namespace {
 			filtered = append(filtered, r)
 		}
 	}
-	cfg.Global.Recents = append([]RecentEntry{{Namespace: namespace}}, filtered...)
+	cfg.Global.Recents = append([]RecentEntry{{Namespace: namespace, LastUsed: time.Now().UTC()}}, filtered...)
 	if len(cfg.Global.Recents) > 10 {
 		cfg.Global.Recents = cfg.Global.Recents[:10]
 	}
 }
 
 func (cfg *Config) AddProject(p ProjectEntry) {
-	for _, existing := range cfg.Projects {
+	for i, existing := range cfg.Projects {
 		if existing.ID == p.ID {
+			cfg.Projects[i] = p // update in place
 			return
 		}
 	}
@@ -82,7 +101,7 @@ func (cfg *Config) AddProject(p ProjectEntry) {
 }
 
 func (cfg *Config) RemoveProject(id int) {
-	result := cfg.Projects[:0]
+	result := make([]ProjectEntry, 0, len(cfg.Projects))
 	for _, p := range cfg.Projects {
 		if p.ID != id {
 			result = append(result, p)

@@ -44,6 +44,25 @@ func TestSaveAndLoad(t *testing.T) {
 	if loaded.Global.Token != cfg.Global.Token {
 		t.Errorf("Token = %q, want %q", loaded.Global.Token, cfg.Global.Token)
 	}
+
+	// Verify project round-trip
+	cfg.AddProject(config.ProjectEntry{ID: 42, Namespace: "mygroup/myrepo", Name: "myrepo", Starred: true})
+	if err := config.Save(cfg); err != nil {
+		t.Fatalf("Save() with project error = %v", err)
+	}
+	loaded2, err := config.Load()
+	if err != nil {
+		t.Fatalf("Load() after project save error = %v", err)
+	}
+	if len(loaded2.Projects) != 1 {
+		t.Fatalf("len(projects) = %d, want 1", len(loaded2.Projects))
+	}
+	if loaded2.Projects[0].ID != 42 {
+		t.Errorf("project ID = %d, want 42", loaded2.Projects[0].ID)
+	}
+	if !loaded2.Projects[0].Starred {
+		t.Error("project Starred = false, want true")
+	}
 }
 
 func TestValidate(t *testing.T) {
@@ -100,17 +119,20 @@ func TestAddRecentCap(t *testing.T) {
 	for i := 0; i < 12; i++ {
 		cfg.AddRecent(filepath.Join("group", string(rune('a'+i))))
 	}
-	if len(cfg.Global.Recents) > 10 {
-		t.Errorf("len(recents) = %d, want <= 10", len(cfg.Global.Recents))
+	if len(cfg.Global.Recents) != 10 {
+		t.Errorf("len(recents) = %d, want 10", len(cfg.Global.Recents))
 	}
 }
 
 func TestAddAndRemoveProject(t *testing.T) {
 	cfg := &config.Config{}
 	cfg.AddProject(config.ProjectEntry{ID: 1, Namespace: "g/a", Name: "a"})
-	cfg.AddProject(config.ProjectEntry{ID: 1, Namespace: "g/a", Name: "a"}) // duplicate ignored
+	cfg.AddProject(config.ProjectEntry{ID: 1, Namespace: "g/a", Name: "a-updated", Starred: true}) // upsert
 	if len(cfg.Projects) != 1 {
-		t.Errorf("len(projects) = %d, want 1", len(cfg.Projects))
+		t.Errorf("len(projects) = %d, want 1 (upsert should not add duplicate)", len(cfg.Projects))
+	}
+	if cfg.Projects[0].Name != "a-updated" {
+		t.Errorf("project Name = %q, want a-updated (upsert should update)", cfg.Projects[0].Name)
 	}
 	cfg.RemoveProject(1)
 	if len(cfg.Projects) != 0 {

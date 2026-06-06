@@ -26,12 +26,20 @@ archives:
       - completions/*
 
 brews:
-  - name: baltig
-    repository:
-      owner: benly
+  - repository:
+      owner: benly50s
       name: homebrew-tap
-    homepage: "https://github.com/benly/baltig"
+      branch: main
+      token: "{{ .Env.TAP_GITHUB_TOKEN }}"
+    directory: Formula
+    homepage: "https://github.com/benly50s/baltig"
     description: "GitLab pipeline TUI"
+    license: "MIT"
+    install: |
+      bin.install "baltig"
+      bash_completion.install "completions/baltig.bash" => "baltig"
+      zsh_completion.install "completions/_baltig" => "_baltig"
+      fish_completion.install "completions/baltig.fish"
     test: |
       system "#{bin}/baltig --help"
 

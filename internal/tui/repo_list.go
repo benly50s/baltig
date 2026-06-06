@@ -36,6 +36,13 @@ func (r repoItem) Description() string {
 
 func (r repoItem) FilterValue() string { return r.project.Namespace }
 
+// addRepoItem is a special list entry that navigates to the repo search screen.
+type addRepoItem struct{}
+
+func (a addRepoItem) Title() string       { return StyleMuted.Render("＋  새 저장소 추가") }
+func (a addRepoItem) Description() string { return "" }
+func (a addRepoItem) FilterValue() string { return "" }
+
 type RepoListModel struct {
 	cfg    *config.Config
 	client *gitlab.Client
@@ -73,7 +80,9 @@ func buildRepoItems(cfg *config.Config) []list.Item {
 			rest = append(rest, item)
 		}
 	}
-	return append(starred, rest...)
+	items := append(starred, rest...)
+	items = append(items, addRepoItem{})
+	return items
 }
 
 func (m *RepoListModel) Init() tea.Cmd { return nil }
@@ -85,9 +94,6 @@ func (m *RepoListModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case tea.KeyMsg:
 		switch {
-		case key.Matches(msg, Keys.Add):
-			return m, func() tea.Msg { return navigateToRepoSearch{} }
-
 		case key.Matches(msg, Keys.Delete):
 			if i, ok := m.list.SelectedItem().(repoItem); ok {
 				m.cfg.RemoveProject(i.project.ID)
@@ -97,7 +103,10 @@ func (m *RepoListModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 
 		case key.Matches(msg, Keys.Select):
-			if i, ok := m.list.SelectedItem().(repoItem); ok {
+			switch i := m.list.SelectedItem().(type) {
+			case addRepoItem:
+				return m, func() tea.Msg { return navigateToRepoSearch{} }
+			case repoItem:
 				m.cfg.AddRecent(i.project.Namespace)
 				_ = config.Save(m.cfg)
 				project := i.project
@@ -124,12 +133,11 @@ func (m *RepoListModel) View() string {
 		rightAlign,
 		StyleMuted.Render(m.cfg.Global.GitLabURL),
 	)
-	help := renderHelp("r", "추가", "d", "삭제", "enter", "선택", "q", "종료")
+	help := renderHelp("enter", "선택", "ctrl+d", "삭제", "q", "종료")
 
 	if len(m.cfg.Projects) == 0 {
-		empty := fmt.Sprintf("\n  %s\n  %s",
-			StyleMuted.Render("등록된 저장소가 없습니다."),
-			StyleMuted.Render("r 키를 눌러 저장소를 추가하세요."),
+		empty := fmt.Sprintf("\n  %s",
+			StyleMuted.Render("등록된 저장소가 없습니다. ↓ 아래 항목을 선택해 추가하세요."),
 		)
 		return header + "\n" + empty + "\n\n" + help
 	}

@@ -72,6 +72,15 @@ func (c *Client) CreatePipeline(projectID int64, ref string, vars []PipelineVari
 	}, nil
 }
 
+// DeletePipeline deletes a pipeline by ID.
+func (c *Client) DeletePipeline(projectID, pipelineID int64) error {
+	_, err := c.gl.Pipelines.DeletePipeline(projectID, pipelineID)
+	if err != nil {
+		return fmt.Errorf("delete pipeline %d: %w", pipelineID, err)
+	}
+	return nil
+}
+
 // GetPipeline fetches a single pipeline's current state.
 func (c *Client) GetPipeline(projectID, pipelineID int64) (*Pipeline, error) {
 	p, _, err := c.gl.Pipelines.GetPipeline(projectID, pipelineID)

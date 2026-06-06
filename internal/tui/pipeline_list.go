@@ -26,6 +26,9 @@ func (pi pipelineItem) Title() string {
 func (pi pipelineItem) Description() string { return "" }
 func (pi pipelineItem) FilterValue() string { return pi.p.Ref }
 
+type pipelineDeletedMsg struct{}
+type pipelineDeleteErrMsg struct{ err error }
+
 type PipelineListModel struct {
 	cfg     *config.Config
 	client  *gitlab.Client
@@ -88,6 +91,12 @@ func (m *PipelineListModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.loading = false
 		m.err = msg.err.Error()
 
+	case pipelineDeletedMsg:
+		return m, m.loadPipelines()
+
+	case pipelineDeleteErrMsg:
+		m.err = msg.err.Error()
+
 	case tea.KeyMsg:
 		switch {
 		case key.Matches(msg, Keys.Back):
@@ -96,6 +105,19 @@ func (m *PipelineListModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, Keys.New):
 			project := m.project
 			return m, func() tea.Msg { return navigateToPipelineRun{project: project} }
+
+		case key.Matches(msg, Keys.Delete):
+			if i, ok := m.list.SelectedItem().(pipelineItem); ok {
+				client := m.client
+				projectID := m.project.ID
+				pipelineID := i.p.ID
+				return m, func() tea.Msg {
+					if err := client.DeletePipeline(projectID, pipelineID); err != nil {
+						return pipelineDeleteErrMsg{err}
+					}
+					return pipelineDeletedMsg{}
+				}
+			}
 
 		case key.Matches(msg, Keys.Select):
 			if i, ok := m.list.SelectedItem().(pipelineItem); ok {
@@ -120,7 +142,7 @@ func (m *PipelineListModel) View() string {
 	if m.err != "" {
 		return StyleHeader.Render(m.project.Namespace) + "\n\n  " + StyleError.Render("오류: "+m.err)
 	}
-	help := renderHelp("n", "새 파이프라인", "enter", "상세", "esc", "뒤로")
+	help := renderHelp("n", "새 파이프라인", "enter", "상세", "ctrl+d", "삭제", "esc", "뒤로")
 	return m.list.View() + "\n" + help
 }
 

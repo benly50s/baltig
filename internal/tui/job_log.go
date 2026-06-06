@@ -128,7 +128,7 @@ func (m *JobLogModel) View() string {
 
 	lineCount := strings.Count(m.content, "\n")
 	statusLine := StyleMuted.Render(fmt.Sprintf("  %d lines", lineCount)) + followIndicator
-	help := StyleHelp.Render("f follow토글  o 브라우저  esc 뒤로")
+	help := renderHelp("f", "follow토글", "o", "브라우저", "esc", "뒤로")
 
 	return header + "\n" + statusLine + "\n" + m.viewport.View() + "\n" + help
 }

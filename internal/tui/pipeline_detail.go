@@ -120,6 +120,6 @@ func (m *PipelineDetailModel) View() string {
 	if m.err != "" {
 		return StyleError.Render("오류: " + m.err)
 	}
-	help := StyleHelp.Render("enter 로그  o 브라우저  esc 뒤로")
+	help := renderHelp("enter", "로그", "o", "브라우저", "esc", "뒤로")
 	return m.list.View() + "\n" + help
 }

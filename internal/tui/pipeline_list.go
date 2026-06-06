@@ -120,7 +120,7 @@ func (m *PipelineListModel) View() string {
 	if m.err != "" {
 		return StyleHeader.Render(m.project.Namespace) + "\n\n  " + StyleError.Render("오류: "+m.err)
 	}
-	help := StyleHelp.Render("n 새 파이프라인  enter 상세  esc 뒤로")
+	help := renderHelp("n", "새 파이프라인", "enter", "상세", "esc", "뒤로")
 	return m.list.View() + "\n" + help
 }
 

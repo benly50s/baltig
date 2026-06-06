@@ -4,31 +4,42 @@ package tui
 import "github.com/charmbracelet/lipgloss"
 
 var (
-	colorPrimary = lipgloss.Color("69")  // indigo
-	colorMuted   = lipgloss.Color("240") // gray
-	colorSuccess = lipgloss.Color("76")  // green
-	colorError   = lipgloss.Color("196") // red
-	colorWarning = lipgloss.Color("214") // orange
-	colorRunning = lipgloss.Color("33")  // blue
+	colorPrimary = lipgloss.Color("#06B6D4") // Cyan-500 (same as k10s)
+	colorMuted   = lipgloss.Color("#6B7280") // Gray-500
+	colorSuccess = lipgloss.Color("#10B981") // Emerald-500
+	colorError   = lipgloss.Color("#EF4444") // Red-500
+	colorWarning = lipgloss.Color("#F59E0B") // Amber-500
+	colorRunning = lipgloss.Color("#3B82F6") // Blue-500
+	colorNormal  = lipgloss.Color("#D1D5DB") // Gray-300
 
 	StyleHeader = lipgloss.NewStyle().
 			Bold(true).
-			Foreground(colorPrimary)
+			Foreground(lipgloss.Color("#FFFFFF")).
+			Background(colorPrimary).
+			Padding(0, 1)
 
 	StyleSubHeader = lipgloss.NewStyle().
-			Foreground(colorMuted)
+			Foreground(colorNormal)
 
 	StyleSelected = lipgloss.NewStyle().
 			Bold(true).
-			Background(lipgloss.Color("236")).
-			Foreground(lipgloss.Color("255"))
+			Foreground(lipgloss.Color("#FFFFFF"))
 
 	StyleMuted = lipgloss.NewStyle().
 			Foreground(colorMuted)
 
 	StyleHelp = lipgloss.NewStyle().
 			Foreground(colorMuted).
-			MarginTop(1)
+			Italic(true)
+
+	// StyleHelpKey: key name in cyan bold (e.g. [enter])
+	StyleHelpKey = lipgloss.NewStyle().
+			Foreground(colorPrimary).
+			Bold(true)
+
+	// StyleHelpDesc: description in muted gray
+	StyleHelpDesc = lipgloss.NewStyle().
+			Foreground(colorMuted)
 
 	StyleSuccess = lipgloss.NewStyle().Foreground(colorSuccess)
 	StyleError   = lipgloss.NewStyle().Foreground(colorError)

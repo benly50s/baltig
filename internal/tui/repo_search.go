@@ -146,7 +146,7 @@ func (m *RepoSearchModel) View() string {
 	header := StyleHeader.Render("저장소 추가")
 	inputLine := "  " + m.input.View()
 	statusLine := StyleMuted.Render("  " + m.status)
-	help := StyleHelp.Render("enter 검색  tab 목록이동  enter 추가  esc 뒤로")
+	help := renderHelp("enter", "검색", "tab", "목록이동", "enter", "추가", "esc", "뒤로")
 
 	return header + "\n\n" + inputLine + "\n" + statusLine + "\n" + m.list.View() + "\n" + help
 }

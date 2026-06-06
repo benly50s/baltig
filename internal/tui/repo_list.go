@@ -124,7 +124,7 @@ func (m *RepoListModel) View() string {
 		rightAlign,
 		StyleMuted.Render(m.cfg.Global.GitLabURL),
 	)
-	help := StyleHelp.Render("r 추가  d 삭제  enter 선택  q 종료")
+	help := renderHelp("r", "추가", "d", "삭제", "enter", "선택", "q", "종료")
 
 	if len(m.cfg.Projects) == 0 {
 		empty := fmt.Sprintf("\n  %s\n  %s",

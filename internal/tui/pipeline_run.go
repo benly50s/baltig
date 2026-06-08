@@ -388,7 +388,7 @@ func (m *PipelineRunModel) View() string {
 		if m.status != "" {
 			status = "\n  " + m.status
 		}
-		help := renderHelp("tab", "이동", "ctrl+a", "변수추가", "ctrl+r", "실행", "esc", "뒤로")
+		help := renderHelp("tab", "이동", "ctrl+a", "변수추가", "ctrl+p", "실행", "esc", "뒤로")
 		return header + "\n\n" + branchLine + "\n" + varSection + "\n" + status + "\n" + help
 	}
 	return header

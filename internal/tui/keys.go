@@ -25,7 +25,7 @@ var Keys = KeyMap{
 	Select: key.NewBinding(key.WithKeys("enter"), key.WithHelp("enter", "선택")),
 	Back:   key.NewBinding(key.WithKeys("esc"), key.WithHelp("esc", "뒤로")),
 	New:    key.NewBinding(key.WithKeys("n"), key.WithHelp("n", "새 파이프라인")),
-	Run:    key.NewBinding(key.WithKeys("ctrl+r"), key.WithHelp("ctrl+r", "실행")),
+	Run:    key.NewBinding(key.WithKeys("ctrl+p"), key.WithHelp("ctrl+p", "실행")),
 	Delete: key.NewBinding(key.WithKeys("ctrl+d"), key.WithHelp("ctrl+d", "삭제")),
 	Open:   key.NewBinding(key.WithKeys("o"), key.WithHelp("o", "브라우저")),
 	Follow: key.NewBinding(key.WithKeys("f"), key.WithHelp("f", "follow")),

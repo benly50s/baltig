@@ -16,12 +16,25 @@ type CIVariable struct {
 	Options     []string // if non-empty, variable has predefined choices
 }
 
-// GetCIVariables fetches .gitlab-ci.yml and returns the top-level variables section.
-// Returns empty slice (no error) if the file doesn't exist or has no variables.
+// GetCIVariables fetches the merged CI config (include: resolved) and returns
+// variables that have a description — matching GitLab web "Run pipeline" form.
 func (c *Client) GetCIVariables(projectID int64, ref string) ([]CIVariable, error) {
-	opts := &gl.GetRawFileOptions{
-		Ref: gl.Ptr(ref),
+	// ProjectLint resolves all include: directives and returns merged YAML.
+	lintOpts := &gl.ProjectLintOptions{
+		Ref:         gl.Ptr(ref),
+		DryRun:      gl.Ptr(false),
+		IncludeJobs: gl.Ptr(false),
 	}
+	result, _, err := c.gl.Validate.ProjectLint(projectID, lintOpts)
+	if err != nil || result.MergedYaml == "" {
+		// Fallback: try raw file directly
+		return c.getCIVariablesFromRaw(projectID, ref)
+	}
+	return parseCIVariables([]byte(result.MergedYaml))
+}
+
+func (c *Client) getCIVariablesFromRaw(projectID int64, ref string) ([]CIVariable, error) {
+	opts := &gl.GetRawFileOptions{Ref: gl.Ptr(ref)}
 	content, resp, err := c.gl.RepositoryFiles.GetRawFile(projectID, ".gitlab-ci.yml", opts)
 	if err != nil {
 		if resp != nil && resp.StatusCode == 404 {
@@ -29,7 +42,6 @@ func (c *Client) GetCIVariables(projectID int64, ref string) ([]CIVariable, erro
 		}
 		return nil, fmt.Errorf("fetch .gitlab-ci.yml: %w", err)
 	}
-
 	return parseCIVariables(content)
 }
 

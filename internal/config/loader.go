@@ -100,6 +100,15 @@ func (cfg *Config) AddProject(p ProjectEntry) {
 	cfg.Projects = append(cfg.Projects, p)
 }
 
+func (cfg *Config) UpdateLastRef(id int64, ref string) {
+	for i := range cfg.Projects {
+		if cfg.Projects[i].ID == id {
+			cfg.Projects[i].LastRef = ref
+			return
+		}
+	}
+}
+
 func (cfg *Config) RemoveProject(id int64) {
 	result := make([]ProjectEntry, 0, len(cfg.Projects))
 	for _, p := range cfg.Projects {

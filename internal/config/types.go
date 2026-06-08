@@ -20,6 +20,7 @@ type ProjectEntry struct {
 	Namespace string `yaml:"namespace"` // stores "group/repo"
 	Name      string `yaml:"name"`
 	Starred   bool   `yaml:"starred"`
+	LastRef   string `yaml:"last_ref,omitempty"` // last branch used for pipeline run
 }
 
 type RecentEntry struct {

@@ -212,9 +212,13 @@ func (m *PipelineRunModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			items[i] = branchItem{b}
 		}
 		_ = m.branchList.SetItems(items)
-		// Pre-select default branch
+		// Pre-select: last used ref for this project → DefaultRef
+		target := m.project.LastRef
+		if target == "" {
+			target = m.cfg.Global.DefaultRef
+		}
 		for i, b := range msg.branches {
-			if b == m.cfg.Global.DefaultRef {
+			if b == target {
 				m.branchList.Select(i)
 				break
 			}
@@ -240,6 +244,8 @@ func (m *PipelineRunModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case pipelineCreatedMsg:
 		m.submitting = false
+		m.cfg.UpdateLastRef(m.project.ID, m.selectedBranch)
+		_ = config.Save(m.cfg)
 		return m, func() tea.Msg { return navigateBack{} }
 
 	case pipelineCreateErrMsg:

@@ -39,24 +39,27 @@ func parseCIVariables(content []byte) ([]CIVariable, error) {
 		return nil, fmt.Errorf("parse .gitlab-ci.yml: %w", err)
 	}
 
-	var result []CIVariable
+	var withDesc, withoutDesc []CIVariable
 	for key, node := range ciFile.Variables {
-		// Only include variables with a description — these are intended for
-		// manual pipeline runs (matches GitLab web UI "Run pipeline" behavior).
-		// Scalar variables (no description) are internal CI config values.
-		if node.Kind == yaml.MappingNode {
+		switch node.Kind {
+		case yaml.ScalarNode:
+			// Simple: ENV: "staging" — pre-fill value, no description
+			withoutDesc = append(withoutDesc, CIVariable{Key: key, Value: node.Value})
+		case yaml.MappingNode:
 			var complex struct {
 				Value       string `yaml:"value"`
 				Description string `yaml:"description"`
 			}
-			if err := node.Decode(&complex); err == nil && complex.Description != "" {
-				result = append(result, CIVariable{
-					Key:         key,
-					Value:       complex.Value,
-					Description: complex.Description,
-				})
+			if err := node.Decode(&complex); err == nil {
+				cv := CIVariable{Key: key, Value: complex.Value, Description: complex.Description}
+				if complex.Description != "" {
+					withDesc = append(withDesc, cv)
+				} else {
+					withoutDesc = append(withoutDesc, cv)
+				}
 			}
 		}
 	}
-	return result, nil
+	// description 있는 변수 먼저, 없는 변수 뒤에
+	return append(withDesc, withoutDesc...), nil
 }

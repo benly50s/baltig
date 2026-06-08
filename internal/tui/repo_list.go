@@ -3,6 +3,7 @@ package tui
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/benly/baltig/internal/config"
@@ -39,7 +40,7 @@ func (r repoItem) FilterValue() string { return r.project.Namespace }
 // addRepoItem is a special list entry that navigates to the repo search screen.
 type addRepoItem struct{}
 
-func (a addRepoItem) Title() string       { return StyleMuted.Render("＋  새 저장소 추가") }
+func (a addRepoItem) Title() string       { return StylePrimary.Bold(true).Render("＋  새 저장소 추가") }
 func (a addRepoItem) Description() string { return "" }
 func (a addRepoItem) FilterValue() string { return "" }
 
@@ -71,7 +72,7 @@ func buildRepoItems(cfg *config.Config) []list.Item {
 		recentSet[r.Namespace] = true
 	}
 
-	var starred, rest []list.Item
+	var starred, rest []repoItem
 	for _, p := range cfg.Projects {
 		item := repoItem{project: p, isRecent: recentSet[p.Namespace]}
 		if p.Starred {
@@ -80,7 +81,22 @@ func buildRepoItems(cfg *config.Config) []list.Item {
 			rest = append(rest, item)
 		}
 	}
-	items := append(starred, rest...)
+
+	sortByName := func(items []repoItem) {
+		sort.Slice(items, func(i, j int) bool {
+			return items[i].project.Namespace < items[j].project.Namespace
+		})
+	}
+	sortByName(starred)
+	sortByName(rest)
+
+	var items []list.Item
+	for _, r := range starred {
+		items = append(items, r)
+	}
+	for _, r := range rest {
+		items = append(items, r)
+	}
 	items = append(items, addRepoItem{})
 	return items
 }

@@ -41,17 +41,15 @@ func parseCIVariables(content []byte) ([]CIVariable, error) {
 
 	var result []CIVariable
 	for key, node := range ciFile.Variables {
-		switch node.Kind {
-		case yaml.ScalarNode:
-			// Simple string: ENV: "staging"
-			result = append(result, CIVariable{Key: key, Value: node.Value})
-		case yaml.MappingNode:
-			// Complex: ENV:\n  value: staging\n  description: ...
+		// Only include variables with a description — these are intended for
+		// manual pipeline runs (matches GitLab web UI "Run pipeline" behavior).
+		// Scalar variables (no description) are internal CI config values.
+		if node.Kind == yaml.MappingNode {
 			var complex struct {
 				Value       string `yaml:"value"`
 				Description string `yaml:"description"`
 			}
-			if err := node.Decode(&complex); err == nil {
+			if err := node.Decode(&complex); err == nil && complex.Description != "" {
 				result = append(result, CIVariable{
 					Key:         key,
 					Value:       complex.Value,

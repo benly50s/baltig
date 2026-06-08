@@ -22,10 +22,12 @@ func (c *Client) GetCIVariables(projectID int64, ref string) ([]CIVariable, erro
 	opts := &gl.GetRawFileOptions{
 		Ref: gl.Ptr(ref),
 	}
-	content, _, err := c.gl.RepositoryFiles.GetRawFile(int(projectID), ".gitlab-ci.yml", opts)
+	content, resp, err := c.gl.RepositoryFiles.GetRawFile(projectID, ".gitlab-ci.yml", opts)
 	if err != nil {
-		// File not found is acceptable — return empty
-		return nil, nil
+		if resp != nil && resp.StatusCode == 404 {
+			return nil, nil // file not found is acceptable
+		}
+		return nil, fmt.Errorf("fetch .gitlab-ci.yml: %w", err)
 	}
 
 	return parseCIVariables(content)

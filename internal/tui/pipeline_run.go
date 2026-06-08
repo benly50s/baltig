@@ -15,7 +15,10 @@ import (
 type pipelineCreatedMsg struct{ p gitlab.Pipeline }
 type pipelineCreateErrMsg struct{ err error }
 type branchesLoadedMsg struct{ branches []string }
-type ciVarsLoadedMsg struct{ vars []gitlab.CIVariable }
+type ciVarsLoadedMsg struct {
+	vars []gitlab.CIVariable
+	err  error
+}
 
 type runPhase int
 
@@ -161,8 +164,8 @@ func (m *PipelineRunModel) loadCIVars(ref string) tea.Cmd {
 	client := m.client
 	projectID := m.project.ID
 	return func() tea.Msg {
-		vars, _ := client.GetCIVariables(projectID, ref)
-		return ciVarsLoadedMsg{vars: vars}
+		vars, err := client.GetCIVariables(projectID, ref)
+		return ciVarsLoadedMsg{vars: vars, err: err}
 	}
 }
 
@@ -215,13 +218,15 @@ func (m *PipelineRunModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case ciVarsLoadedMsg:
 		m.loadingCIVars = false
-		if len(msg.vars) > 0 {
+		if msg.err != nil {
+			m.status = StyleError.Render("CI 변수 로딩 실패: " + msg.err.Error())
+			m.vars = []varField{newVarField()}
+		} else if len(msg.vars) > 0 {
 			m.vars = make([]varField, len(msg.vars))
 			for i, cv := range msg.vars {
 				m.vars[i] = newVarFieldFromCI(cv)
 			}
 		} else {
-			// No CI vars: start with one empty field
 			m.vars = []varField{newVarField()}
 		}
 		m.focusIdx = 0

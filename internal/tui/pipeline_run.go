@@ -180,7 +180,9 @@ func (m *PipelineRunModel) totalVarFields() int {
 func (m *PipelineRunModel) updateVarFocus() tea.Cmd {
 	for i := range m.vars {
 		m.vars[i].keyInput.Blur()
-		m.vars[i].valueInput.Blur()
+		if !m.vars[i].isSelect() {
+			m.vars[i].valueInput.Blur()
+		}
 	}
 	if len(m.vars) == 0 {
 		return nil
@@ -191,7 +193,9 @@ func (m *PipelineRunModel) updateVarFocus() tea.Cmd {
 		if isKey {
 			return m.vars[varIdx].keyInput.Focus()
 		}
-		return m.vars[varIdx].valueInput.Focus()
+		if !m.vars[varIdx].isSelect() {
+			return m.vars[varIdx].valueInput.Focus()
+		}
 	}
 	return nil
 }

@@ -226,7 +226,9 @@ func (m *PipelineRunModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			for i, cv := range msg.vars {
 				m.vars[i] = newVarFieldFromCI(cv)
 			}
+			m.status = ""
 		} else {
+			m.status = StyleMuted.Render(".gitlab-ci.yml에서 description이 있는 변수를 찾지 못했습니다")
 			m.vars = []varField{newVarField()}
 		}
 		m.focusIdx = 0

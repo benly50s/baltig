@@ -25,7 +25,7 @@ func (c *Client) GetCIVariables(projectID int64, ref string) ([]CIVariable, erro
 	content, resp, err := c.gl.RepositoryFiles.GetRawFile(projectID, ".gitlab-ci.yml", opts)
 	if err != nil {
 		if resp != nil && resp.StatusCode == 404 {
-			return nil, nil // file not found is acceptable
+			return nil, fmt.Errorf(".gitlab-ci.yml 파일 없음 (ref: %s)", ref)
 		}
 		return nil, fmt.Errorf("fetch .gitlab-ci.yml: %w", err)
 	}

@@ -13,6 +13,7 @@ type CIVariable struct {
 	Key         string
 	Value       string
 	Description string
+	Options     []string // if non-empty, variable has predefined choices
 }
 
 // GetCIVariables fetches .gitlab-ci.yml and returns the top-level variables section.
@@ -45,14 +46,16 @@ func parseCIVariables(content []byte) ([]CIVariable, error) {
 		// Scalar variables (no description) are CI-internal config and not user-settable.
 		if node.Kind == yaml.MappingNode {
 			var complex struct {
-				Value       string `yaml:"value"`
-				Description string `yaml:"description"`
+				Value       string   `yaml:"value"`
+				Description string   `yaml:"description"`
+				Options     []string `yaml:"options"`
 			}
 			if err := node.Decode(&complex); err == nil && complex.Description != "" {
 				result = append(result, CIVariable{
 					Key:         key,
 					Value:       complex.Value,
 					Description: complex.Description,
+					Options:     complex.Options,
 				})
 			}
 		}

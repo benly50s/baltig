@@ -41,6 +41,7 @@ var (
 	StyleHelpDesc = lipgloss.NewStyle().
 			Foreground(colorMuted)
 
+	StylePrimary = lipgloss.NewStyle().Foreground(colorPrimary)
 	StyleSuccess = lipgloss.NewStyle().Foreground(colorSuccess)
 	StyleError   = lipgloss.NewStyle().Foreground(colorError)
 	StyleWarning = lipgloss.NewStyle().Foreground(colorWarning)

@@ -35,7 +35,38 @@ func (b branchItem) FilterValue() string { return b.name }
 type varField struct {
 	keyInput   textinput.Model
 	valueInput textinput.Model
-	desc       string // from .gitlab-ci.yml description
+	desc       string
+	// select mode (when options != nil)
+	options   []string
+	selectIdx int
+}
+
+func (vf *varField) isSelect() bool { return len(vf.options) > 0 }
+
+func (vf *varField) value() string {
+	if vf.isSelect() {
+		return vf.options[vf.selectIdx]
+	}
+	return vf.valueInput.Value()
+}
+
+func (vf *varField) selectNext() {
+	vf.selectIdx = (vf.selectIdx + 1) % len(vf.options)
+}
+
+func (vf *varField) selectPrev() {
+	vf.selectIdx = (vf.selectIdx - 1 + len(vf.options)) % len(vf.options)
+}
+
+func (vf *varField) renderValue(focused bool) string {
+	if !vf.isSelect() {
+		return vf.valueInput.View()
+	}
+	val := vf.options[vf.selectIdx]
+	if focused {
+		return StylePrimary.Render("◀ ") + StyleSelected.Render(val) + StylePrimary.Render(" ▶")
+	}
+	return StyleMuted.Render("[") + val + StyleMuted.Render("]")
 }
 
 func newVarField() varField {
@@ -55,11 +86,24 @@ func newVarFieldFromCI(cv gitlab.CIVariable) varField {
 	k.Width = 15
 	k.SetValue(cv.Key)
 
-	v := textinput.New()
-	v.Width = 25
-	v.SetValue(cv.Value)
+	vf := varField{keyInput: k, desc: cv.Description, options: cv.Options}
 
-	return varField{keyInput: k, valueInput: v, desc: cv.Description}
+	if len(cv.Options) > 0 {
+		// Find default value index in options
+		for i, opt := range cv.Options {
+			if opt == cv.Value {
+				vf.selectIdx = i
+				break
+			}
+		}
+	} else {
+		v := textinput.New()
+		v.Width = 25
+		v.SetValue(cv.Value)
+		vf.valueInput = v
+	}
+
+	return vf
 }
 
 type PipelineRunModel struct {
@@ -233,6 +277,21 @@ func (m *PipelineRunModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case msg.String() == "ctrl+a":
 				m.vars = append(m.vars, newVarField())
 				return m, nil
+
+			default:
+				// left/right cycles select options when focused on value column
+				varIdx := m.focusIdx / 2
+				isValue := m.focusIdx%2 == 1
+				if isValue && varIdx < len(m.vars) && m.vars[varIdx].isSelect() {
+					switch msg.String() {
+					case "left", "h":
+						m.vars[varIdx].selectPrev()
+						return m, nil
+					case "right", "l":
+						m.vars[varIdx].selectNext()
+						return m, nil
+					}
+				}
 			}
 		}
 	}
@@ -249,7 +308,7 @@ func (m *PipelineRunModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if varIdx < len(m.vars) {
 				if isKey {
 					m.vars[varIdx].keyInput, cmd = m.vars[varIdx].keyInput.Update(msg)
-				} else {
+				} else if !m.vars[varIdx].isSelect() {
 					m.vars[varIdx].valueInput, cmd = m.vars[varIdx].valueInput.Update(msg)
 				}
 			}
@@ -265,7 +324,7 @@ func (m *PipelineRunModel) submit() tea.Cmd {
 	vars := make([]gitlab.PipelineVariable, 0, len(m.vars))
 	for _, vf := range m.vars {
 		k := vf.keyInput.Value()
-		v := vf.valueInput.Value()
+		v := vf.value()
 		if k != "" {
 			vars = append(vars, gitlab.PipelineVariable{Key: k, Value: v})
 		}
@@ -305,12 +364,13 @@ func (m *PipelineRunModel) View() string {
 		if len(m.vars) == 0 {
 			varSection += "\n  " + StyleMuted.Render("(없음)")
 		}
-		for _, vf := range m.vars {
+		for i, vf := range m.vars {
 			descStr := ""
 			if vf.desc != "" {
 				descStr = "  " + StyleMuted.Render("# "+vf.desc)
 			}
-			varSection += fmt.Sprintf("\n  %s  =  %s%s", vf.keyInput.View(), vf.valueInput.View(), descStr)
+			valueFocused := m.focusIdx/2 == i && m.focusIdx%2 == 1
+			varSection += fmt.Sprintf("\n  %s  =  %s%s", vf.keyInput.View(), vf.renderValue(valueFocused), descStr)
 		}
 
 		status := ""

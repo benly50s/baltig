@@ -57,8 +57,7 @@ func NewRepoListModel(cfg *config.Config, client *gitlab.Client) *RepoListModel 
 	delegate.Styles.SelectedDesc = StyleSelected.Faint(true)
 
 	l := list.New(items, delegate, 0, 0)
-	l.Title = "baltig"
-	l.Styles.Title = StyleHeader
+	l.SetShowTitle(false)
 	l.SetShowStatusBar(false)
 	l.SetFilteringEnabled(true)
 	l.SetShowHelp(false)

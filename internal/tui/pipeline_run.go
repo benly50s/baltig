@@ -270,7 +270,7 @@ func (m *PipelineRunModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.status = ""
 				return m, nil
 
-			case msg.String() == "ctrl+r" && !m.submitting:
+			case key.Matches(msg, Keys.Run) && !m.submitting:
 				return m, m.submit()
 
 			case msg.String() == "tab":
